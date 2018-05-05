@@ -44,4 +44,14 @@ func doReduce(
 	//
 	// Your code here (Part I).
 	//
+	m := make(map[string][]string)
+	for i := 0; i < nMap; i++ {
+		fileName := reduceName(jobName, i, reduceTask)
+		for {
+			
+			value, ok := m[]
+		}
+		
+	}
+	
 }
