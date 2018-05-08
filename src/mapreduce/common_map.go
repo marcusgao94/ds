@@ -1,10 +1,10 @@
 package mapreduce
 
 import (
-	"encoding/json",
-	"log",
-	"hash/fnv", 
+	"encoding/json"
+	"hash/fnv"
 	"io/ioutil"
+	"os"
 )
 
 func doMap(
@@ -56,31 +56,27 @@ func doMap(
 	//
 	// Your code here (Part I).
 	//
-	b, e := ioutil.readFile(inFile)
-	if e != nil {
-		log.Fatal("error reading from %s", inFile)
-	}
+	b, e := ioutil.ReadFile(inFile)
+	check_err(e, "error reading from %s", inFile)
 	fileContent := string(b)
 	writers := make([]*os.File, nReduce)
 	for i := 0; i < nReduce; i++ {
 		fileName := reduceName(jobName, mapTask, i)
-		writer := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		writer, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		check_err(err, "cannot open file %s for writing intermediate map results", fileName)
 		writers[i] = writer
 	}
 
 	mapResult := mapF(inFile, fileContent)
 
-	for _, keyvalue := range mapRedult {
-		r = ihash(keyvalue.key) % nReduce
-		fileName := reduceName(jobName, mapTask, r)
+	for _, keyvalue := range mapResult {
+		r := ihash(keyvalue.Key) % nReduce
 		enc := json.NewEncoder(writers[r])
-		err := enc.Encode(&keyvalue)
-		if err != nil {
-			log.Fatal("error saving %s: %s to json file", keyvalue.key, keyvalue.value)
-		}
+		err := enc.Encode(keyvalue)
+		check_err(err, "error saving %s: %s to json file", keyvalue.Key, keyvalue.Value)
 	}
 	for i := 0; i < nReduce; i++ {
-		writer[i].Close()
+		writers[i].Close()
 	}
 }
 
