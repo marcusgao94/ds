@@ -57,13 +57,13 @@ func doMap(
 	// Your code here (Part I).
 	//
 	b, e := ioutil.ReadFile(inFile)
-	check_err(e, "error reading from %s", inFile)
+	Check_err(e, "error reading from %s", inFile)
 	fileContent := string(b)
 	writers := make([]*os.File, nReduce)
 	for i := 0; i < nReduce; i++ {
 		fileName := reduceName(jobName, mapTask, i)
 		writer, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		check_err(err, "cannot open file %s for writing intermediate map results", fileName)
+		Check_err(err, "cannot open file %s for writing intermediate map results", fileName)
 		writers[i] = writer
 	}
 
@@ -73,7 +73,7 @@ func doMap(
 		r := ihash(keyvalue.Key) % nReduce
 		enc := json.NewEncoder(writers[r])
 		err := enc.Encode(keyvalue)
-		check_err(err, "error saving %s: %s to json file", keyvalue.Key, keyvalue.Value)
+		Check_err(err, "error saving %s: %s to json file", keyvalue.Key, keyvalue.Value)
 	}
 	for i := 0; i < nReduce; i++ {
 		writers[i].Close()

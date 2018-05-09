@@ -89,9 +89,13 @@
 	"command_palette":
 	{
 		"height": 392.0,
-		"last_filter": ":4",
+		"last_filter": ":w",
 		"selected_items":
 		[
+			[
+				":w",
+				":w - Save"
+			],
 			[
 				":4",
 				"Set Syntax: camlp4"
@@ -103,10 +107,6 @@
 			[
 				"install",
 				"Package Control: Install Package"
-			],
-			[
-				":w",
-				":w - Save"
 			],
 			[
 				"cmake",
@@ -137,6 +137,9 @@
 	},
 	"file_history":
 	[
+		"/Users/marcus/Documents/ds/sftp-config.json",
+		"/Users/marcus/Documents/ds/src/main/wc.go",
+		"/Users/marcus/Documents/ds/.gitignore",
 		"/Users/marcus/sync/tem.py",
 		"/Users/marcus/Library/Application Support/Sublime Text 3/Packages/GoSublime/CHANGELOG.md",
 		"/Users/marcus/Library/Application Support/Sublime Text 3/Packages/Anaconda/Anaconda.sublime-settings",
@@ -230,15 +233,13 @@
 		"height": 101.0,
 		"where_history":
 		[
-			""
 		]
 	},
 	"find_state":
 	{
-		"case_sensitive": false,
+		"case_sensitive": true,
 		"find_history":
 		[
-			"reduceName"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -294,7 +295,7 @@
 	},
 	"output.sftp":
 	{
-		"height": 126.0
+		"height": 187.0
 	},
 	"pinned_build_system": "",
 	"replace":

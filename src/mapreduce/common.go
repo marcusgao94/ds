@@ -43,10 +43,10 @@ func mergeName(jobName string, reduceTask int) string {
 	return "mrtmp." + jobName + "-res-" + strconv.Itoa(reduceTask)
 }
 
-func check_err(err error, msg string, a ...interface{}) {
+func Check_err(err error, msg string, a ...interface{}) {
 	if err != nil {
 		if msg != "" {
-			fmt.Printf(msg+"\n", a)
+			fmt.Printf(msg+"\n", a...)
 		}
 		log.Fatal(err)
 	}
