@@ -2,7 +2,6 @@ package mapreduce
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 )
 
@@ -54,7 +53,13 @@ func doReduce(
 	for i := 0; i < nMap; i++ {
 		fileName := reduceName(jobName, i, reduceTask)
 		file, err := os.Open(fileName)
-		Check_err(err, "error opening %s for read", fileName)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			} else {
+				Check_err(err, "error opening %s for read", fileName)
+			}
+		}
 		dec := json.NewDecoder(file)
 		for {
 			kv := KeyValue{}
@@ -70,19 +75,6 @@ func doReduce(
 				m[kv.Key] = []string{}
 			}
 			m[kv.Key] = append(m[kv.Key], kv.Value)
-		}
-	}
-
-	for k, v := range m {
-		if k == "" {
-			fmt.Printf("key is empty\n")
-			fmt.Println(v)
-		}
-		for _, vv := range v {
-			if vv == "" {
-				fmt.Printf("value of %s has empty\n", k)
-				break
-			}
 		}
 	}
 

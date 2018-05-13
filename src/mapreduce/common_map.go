@@ -59,24 +59,29 @@ func doMap(
 	b, e := ioutil.ReadFile(inFile)
 	Check_err(e, "error reading from %s", inFile)
 	fileContent := string(b)
-	writers := make([]*os.File, nReduce)
-	for i := 0; i < nReduce; i++ {
-		fileName := reduceName(jobName, mapTask, i)
-		writer, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		Check_err(err, "cannot open file %s for writing intermediate map results", fileName)
-		writers[i] = writer
-	}
 
 	mapResult := mapF(inFile, fileContent)
 
+	// map file to keyvalue. all keyvalue with same (keyhash % nreduce) go to same file.
+	file2KeyValue := make(map[int][]KeyValue)
 	for _, keyvalue := range mapResult {
 		r := ihash(keyvalue.Key) % nReduce
-		enc := json.NewEncoder(writers[r])
-		err := enc.Encode(keyvalue)
-		Check_err(err, "error saving %s: %s to json file", keyvalue.Key, keyvalue.Value)
+		_, ok := file2KeyValue[r]
+		if !ok {
+			file2KeyValue[r] = []KeyValue{}
+		}
+		file2KeyValue[r] = append(file2KeyValue[r], keyvalue)
 	}
-	for i := 0; i < nReduce; i++ {
-		writers[i].Close()
+	for f, kvs := range file2KeyValue {
+		fileName := reduceName(jobName, mapTask, f)
+		writer, err := os.Create(fileName)
+		Check_err(err, "cannot open file %s for write tem map results", fileName)
+		enc := json.NewEncoder(writer)
+		for _, kv := range kvs {
+			err := enc.Encode(kv)
+			Check_err(err, "error saving %s: %s to json file %s", kv.Key, kv.Value, fileName)
+		}
+		writer.Close()
 	}
 }
 

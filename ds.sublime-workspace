@@ -4,6 +4,14 @@
 		"selected_items":
 		[
 			[
+				"Pr",
+				"Printf\tn int, err error ƒ"
+			],
+			[
+				"pr",
+				"Printf\tn int, err error ƒ"
+			],
+			[
 				"get",
 				"get_before_time"
 			],
@@ -89,7 +97,7 @@
 	"command_palette":
 	{
 		"height": 392.0,
-		"last_filter": ":w",
+		"last_filter": "",
 		"selected_items":
 		[
 			[
@@ -137,8 +145,19 @@
 	},
 	"file_history":
 	[
-		"/Users/marcus/Documents/ds/sftp-config.json",
+		"/Users/marcus/Google Drive/distributed_system/crawler.go",
+		"/Users/marcus/Documents/ds/src/mapreduce/summary.txt",
+		"/Users/marcus/Documents/ds/src/mapreduce/common_rpc.go",
+		"/Users/marcus/Documents/ds/src/mapreduce/master_splitmerge.go",
 		"/Users/marcus/Documents/ds/src/main/wc.go",
+		"/Users/marcus/Documents/ds/src/mapreduce/common_reduce.go",
+		"/Users/marcus/Documents/ds/src/mapreduce/common_map.go",
+		"/Users/marcus/Documents/ds/src/main/pg-being_ernest.txt",
+		"/Users/marcus/Documents/ds/src/main/lockd.go",
+		"/Users/marcus/Documents/ds/src/main/test-wc.sh",
+		"/Users/marcus/Documents/ds/src/main/tem",
+		"/Users/marcus/Documents/ds/src/main/temmain.go",
+		"/Users/marcus/Documents/ds/sftp-config.json",
 		"/Users/marcus/Documents/ds/.gitignore",
 		"/Users/marcus/sync/tem.py",
 		"/Users/marcus/Library/Application Support/Sublime Text 3/Packages/GoSublime/CHANGELOG.md",
@@ -226,7 +245,7 @@
 	],
 	"find":
 	{
-		"height": 27.0
+		"height": 28.0
 	},
 	"find_in_files":
 	{
@@ -256,11 +275,11 @@
 	},
 	"incremental_find":
 	{
-		"height": 27.0
+		"height": 28.0
 	},
 	"input":
 	{
-		"height": 39.0
+		"height": 40.0
 	},
 	"layout":
 	{
@@ -300,7 +319,7 @@
 	"pinned_build_system": "",
 	"replace":
 	{
-		"height": 50.0
+		"height": 52.0
 	},
 	"save_all_on_build": true,
 	"select_file":

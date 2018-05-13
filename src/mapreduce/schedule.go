@@ -1,6 +1,9 @@
 package mapreduce
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 //
 // schedule() starts and waits for all tasks in the given phase (mapPhase
@@ -30,5 +33,52 @@ func schedule(jobName string, mapFiles []string, nReduce int, phase jobPhase, re
 	//
 	// Your code here (Part III, Part IV).
 	//
+
+	// use a map maintain a task success or not
+	type MT struct {
+		sync.Mutex
+		success map[int]bool
+	}
+	mt := new(MT)
+	mt.success = make(map[int]bool)
+	for i := 0; i < ntasks; i++ {
+		mt.success[i] = false
+	}
+	var done sync.WaitGroup
+	for {
+		// if all tasks success, map should be empty
+		mt.Lock()
+		if len(mt.success) == 0 {
+			mt.Unlock()
+			break
+		}
+		// get a unsuccess task from map
+		i := -1
+		for k, _ := range mt.success {
+			i = k
+			break
+		}
+		mt.Unlock()
+		w := <-registerChan
+		done.Add(1)
+		// start a thread to call worker
+		go func(worker string, idx int) {
+			defer done.Done()
+			args := DoTaskArgs{jobName, mapFiles[idx], phase, idx, n_other}
+			succ := call(worker, "Worker.DoTask", &args, &args)
+			if succ {
+				mt.Lock()
+				delete(mt.success, idx)
+				mt.Unlock()
+
+			}
+			select {
+			case registerChan <- worker:
+			default:
+			}
+		}(w, i)
+	}
+	done.Wait()
+
 	fmt.Printf("Schedule: %v done\n", phase)
 }

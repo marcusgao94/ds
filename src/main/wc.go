@@ -22,12 +22,9 @@ func mapF(filename string, contents string) []mapreduce.KeyValue {
 	words := strings.FieldsFunc(contents, func(r rune) bool {
 		return !unicode.IsLetter(r)
 	})
-	fd, _ := os.Create("haha_" + filename)
 	for _, w := range words {
-		fd.WriteString("word: " + w + "\n")
 		kvs = append(kvs, mapreduce.KeyValue{w, "1"})
 	}
-	fd.Close()
 	return kvs
 }
 
