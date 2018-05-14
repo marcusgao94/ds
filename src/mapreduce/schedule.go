@@ -37,7 +37,7 @@ func schedule(jobName string, mapFiles []string, nReduce int, phase jobPhase, re
 	// use a map maintain a task success or not
 	type MT struct {
 		sync.Mutex
-		success map[int]bool
+		success map[int]bool // true is being processed, no key is success
 	}
 	mt := new(MT)
 	mt.success = make(map[int]bool)
@@ -55,9 +55,16 @@ func schedule(jobName string, mapFiles []string, nReduce int, phase jobPhase, re
 		// get a unsuccess task from map
 		i := -1
 		for k, _ := range mt.success {
-			i = k
-			break
+			if !mt.success[k] {
+				i = k
+				break
+			}
 		}
+		if i == -1 {
+			mt.Unlock()
+			continue
+		}
+		mt.success[i] = true
 		mt.Unlock()
 		w := <-registerChan
 		done.Add(1)
@@ -70,11 +77,14 @@ func schedule(jobName string, mapFiles []string, nReduce int, phase jobPhase, re
 				mt.Lock()
 				delete(mt.success, idx)
 				mt.Unlock()
-
-			}
-			select {
-			case registerChan <- worker:
-			default:
+				select {
+				case registerChan <- worker:
+				default:
+				}
+			} else {
+				mt.Lock()
+				mt.success[idx] = false
+				mt.Unlock()
 			}
 		}(w, i)
 	}
