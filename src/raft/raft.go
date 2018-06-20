@@ -18,7 +18,6 @@ package raft
 //
 
 import (
-	"math"
 	"math/rand"
 	"sync"
 	"time"
@@ -114,20 +113,20 @@ func (rf *Raft) resetElectionTimeout() {
 	rf.timer.reset(timeout, rf.becomeCandidate)
 }
 
-func (rf *Raft) resetHeartbeat() {
-	timeout := 120
-	// rf.timer.reset(timeout, )
-}
+// func (rf *Raft) resetHeartbeat() {
+// 	timeout := 120
+// 	// rf.timer.reset(timeout, )
+// }
 
 func (rf *Raft) becomeCandidate() {
 	rf.state = CANDIDATE
 	rf.currentTerm++
 	rf.resetElectionTimeout()
-	for i := 0; i < len(rf.logEntries; i++) {
+	for i := 0; i < len(rf.logEntries); i++ {
 		req := RequestVoteArgs{rf.currentTerm, rf.me, len(rf.logEntries) - 1,
-												 	 rf.logEntries[len(rf.logEntries)-1]}
+			rf.logEntries[len(rf.logEntries)-1].Term}
 		rep := RequestVoteReply{}
-		rf.sendRequestVote(i, req, rep)
+		rf.sendRequestVote(i, &req, &rep)
 	}
 }
 
@@ -190,17 +189,6 @@ func (rf *Raft) readPersist(data []byte) {
 	// }
 }
 
-func setReply(reply interface{}, term int, success bool) {
-	reply.Term = term
-	switch reply.(type) {
-	case *RequestVoteReply:
-		reply.voteGranted = success
-	case *AppendEntriesReply:
-		reply.success = success
-	default:
-	}
-}
-
 //
 // example RequestVote RPC arguments structure.
 // field names must start with capital letters!
@@ -223,6 +211,11 @@ type RequestVoteReply struct {
 	VoteGranted bool
 }
 
+func setRequestVoteReply(reply *RequestVoteReply, term int, grant bool) {
+	reply.Term = term
+	reply.VoteGranted = grant
+}
+
 //
 // example RequestVote RPC handler.
 //
@@ -230,7 +223,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	// check term
 	if args.Term < rf.currentTerm {
-		setReply(reply, rf.currentTerm, false)
+		setRequestVoteReply(reply, rf.currentTerm, false)
 		return
 	}
 	if args.Term > rf.currentTerm {
@@ -243,13 +236,13 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	cond2 := lastLog.Term > args.LastLogTerm
 	cond3 := lastLog.Term == args.LastLogTerm && lastLog.Index > args.LastLogIndex
 	if cond1 || cond2 || cond3 {
-		setReply(reply, rf.currentTerm, false)
+		setRequestVoteReply(reply, rf.currentTerm, false)
 		return
 	}
 	rf.votedFor = args.CandidateId
 	rf.currentTerm = args.Term
-	rf.resetElectionTimeoutTimer()
-	setReply(reply, rf.currentTerm, true)
+	rf.resetElectionTimeout()
+	setRequestVoteReply(reply, rf.currentTerm, true)
 }
 
 //
@@ -297,21 +290,27 @@ type AppendEntriesArgs struct {
 
 type AppendEntriesReply struct {
 	Term    int
-	success bool
+	Success bool
+}
+
+func setAppendEntriesReply(reply *AppendEntriesReply, term int, success bool) {
+	reply.Term = term
+	reply.Success = success
 }
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	if args.Term < rf.currentTerm {
-		setReply(reply, rf.currentTerm, false)
+		setAppendEntriesReply(reply, rf.currentTerm, false)
 		return
 	}
 	// check rf has the log entry before new ones
 	if len(rf.logEntries) < args.PrevLogIndex+1 ||
 		rf.logEntries[args.PrevLogIndex].Term != args.PrevLogTerm {
-		setReply(reply, rf.currentTerm, false)
+		setAppendEntriesReply(reply, rf.currentTerm, false)
 		return
 	}
 	rf.resetElectionTimeout()
+	rf.currentTerm = args.Term
 	i := 0
 	for j := args.PrevLogIndex + 1; i < len(args.Entries) && j < len(rf.logEntries); i++ {
 		// if existing entry doesn't match, delete this one and all after
@@ -326,7 +325,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		rf.logEntries = append(rf.logEntries, args.Entries[i])
 	}
 	if args.LeaderCommit > rf.commitIndex {
-		rf.commitIndex = math.Min(args.LeaderCommit, len(rf.logEntries)-1)
+		rf.commitIndex = Minint(args.LeaderCommit, len(rf.logEntries)-1)
 	}
 
 }
