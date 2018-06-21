@@ -2,7 +2,6 @@ package raft
 
 import (
 	"log"
-	"time"
 )
 
 // Debugging
@@ -15,13 +14,20 @@ func DPrintf(format string, a ...interface{}) (n int, err error) {
 	return
 }
 
-func NowMilli() int64 {
-	return int64(time.Now().UnixNano() / 1000000)
-}
-
 func Minint(a, b int) int {
 	if a <= b {
 		return a
 	}
 	return b
+}
+
+func CleanAndSet(ch chan bool) {
+	for {
+		select {
+		case <-ch:
+		default:
+			break
+		}
+	}
+	ch <- true
 }
