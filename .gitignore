@@ -5,3 +5,4 @@ api.key
 sftp-config.json
 **/.DS_Store
 **/*.sublime-project
+**/*.sublime-workspace
