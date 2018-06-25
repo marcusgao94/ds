@@ -457,10 +457,10 @@ func (rf *Raft) becomeLeader() {
 	rf.state = LEADER
 	rf.heartbeat = HEARTBEAT
 	// init nextIndex and
-	for i := 0; i < len(rf.peers); i++ {
-		rf.nextIndex[i] = len(rf.logEntries) + 1
-		rf.matchIndex[i] = 0
-	}
+	// for i := 0; i < len(rf.peers); i++ {
+	// rf.nextIndex[i] = len(rf.logEntries)
+	// rf.matchIndex[i] = 0
+	// }
 }
 
 func (rf *Raft) resetElectionTimeout() {
@@ -541,10 +541,17 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.me = me
 
 	// Your initialization code here (2A, 2B, 2C).
+	rf.currentTerm = 0
 	rf.votedFor = -1
 	rf.logEntries = append(make([]LogEntry, 0), LogEntry{})
+	rf.commitIndex = 0
+	rf.lastApplied = 0
 	rf.nextIndex = make([]int, len(peers))
 	rf.matchIndex = make([]int, len(peers))
+	for i := 0; i < len(peers); i++ {
+		rf.nextIndex[i] = 0
+		rf.matchIndex[i] = 0
+	}
 
 	rf.grantVoteCh = make(chan bool)
 	rf.appEntCh = make(chan bool)
