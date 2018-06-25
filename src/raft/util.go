@@ -1,15 +1,17 @@
 package raft
 
 import (
-	"log"
+	"fmt"
+	"time"
 )
 
 // Debugging
-const Debug = 0
+const Debug = 1
 
 func DPrintf(format string, a ...interface{}) (n int, err error) {
 	if Debug > 0 {
-		log.Printf(format, a...)
+		formatted := fmt.Sprintf(format, a...)
+		fmt.Printf("%v: %s\n", time.Now().Format("2006-01-02 15:04:05.999999"), formatted)
 	}
 	return
 }
@@ -22,12 +24,16 @@ func Minint(a, b int) int {
 }
 
 func CleanAndSet(ch chan bool) {
+LOOP:
 	for {
 		select {
 		case <-ch:
 		default:
-			break
+			break LOOP
 		}
 	}
-	ch <- true
+	select {
+	case ch <- true:
+	default:
+	}
 }

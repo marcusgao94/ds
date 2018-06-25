@@ -4,16 +4,116 @@
 		"selected_items":
 		[
 			[
+				"pr",
+				"Printf\tn int, err error ƒ"
+			],
+			[
+				"d",
+				"DPrintf\tn int, err error ƒ"
+			],
+			[
+				"s",
+				"state\tstring ν"
+			],
+			[
+				"be",
+				"becomeFollower\t ƒ"
+			],
+			[
+				"New",
+				"NewTimer\t*time.Timer ƒ"
+			],
+			[
+				"Appen",
+				"AppendEntriesReply\tstruct ʈ"
+			],
+			[
+				"becom",
+				"becomeFollower\t ƒ"
+			],
+			[
+				"send",
+				"sendRequestVote\tbool ƒ"
+			],
+			[
+				"Req",
+				"RequestVoteArgs\tstruct ʈ"
+			],
+			[
+				"req",
+				"RequestVoteReply\tstruct ʈ"
+			],
+			[
+				"reset",
+				"resetTimer\tchan bool ν"
+			],
+			[
+				"new",
+				"NewTimer\t*time.Timer ƒ"
+			],
+			[
+				"bec",
+				"becomeFollower\t ƒ"
+			],
+			[
+				"Repl",
+				"RequestVoteReply\tstruct ʈ"
+			],
+			[
+				"l",
+				"logEntries\t[]LogEntry ν"
+			],
+			[
+				"t",
+				"currentTerm\tint ν"
+			],
+			[
+				"Appe",
+				"AppendEntriesReply\tstruct ʈ"
+			],
+			[
+				"Append",
+				"AppendEntriesResp\tstruct ʈ"
+			],
+			[
+				"uni",
+				"UnixNano\tint64 ƒ"
+			],
+			[
+				"in",
+				"Int63n\tint64 ƒ"
+			],
+			[
+				"n",
+				"UnixNano\tint64 ƒ"
+			],
+			[
+				"mi",
+				"Millisecond\t Ɩ"
+			],
+			[
+				"no",
+				"Now\ttime.Time ƒ"
+			],
+			[
+				"la",
+				"LastLogIndex\tint ν"
+			],
+			[
+				"Requ",
+				"RequestVoteReply\tstruct ʈ"
+			],
+			[
+				"Last",
+				"LastLogTerm\tint ν"
+			],
+			[
 				"is",
 				"IsNotExist\tbool ƒ"
 			],
 			[
 				"spr",
 				"Sprintf\tstring ƒ"
-			],
-			[
-				"pr",
-				"Println\tn int, err error ƒ"
 			],
 			[
 				"p",
@@ -101,25 +201,6 @@
 			]
 		]
 	},
-	"buffers":
-	[
-		{
-			"file": "src/raft/raft.go",
-			"settings":
-			{
-				"buffer_size": 6809,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/raft/config.go",
-			"settings":
-			{
-				"buffer_size": 12183,
-				"line_ending": "Unix"
-			}
-		}
-	],
 	"build_system": "",
 	"build_system_choices":
 	[
@@ -174,14 +255,17 @@
 		"side_bar_visible": false,
 		"status_bar_visible": false
 	},
-	"expanded_folders":
-	[
-		"/Users/marcus/Documents/ds",
-		"/Users/marcus/Documents/ds/src",
-		"/Users/marcus/Documents/ds/src/raft"
-	],
 	"file_history":
 	[
+		"/Users/marcus/Documents/ds/src/raft/test_test.go",
+		"/Users/marcus/Documents/ds/src/labrpc/labrpc.go",
+		"/Users/marcus/Documents/ds/src/raft/config.go",
+		"/Users/marcus/Documents/ds/src/raft/util.go",
+		"/Users/marcus/Documents/ds/src/raft/raft.go",
+		"/Users/marcus/Downloads/kubernetes/fleet-ingress-nginx-deployment.yml",
+		"/Users/marcus/Downloads/kubernetes/int_ingress_controller.yaml",
+		"/Users/marcus/Documents/ds/src/kvraft/config.go",
+		"/Users/marcus/Library/Application Support/Sublime Text 3/Packages/GoSublime/GoSublime.sublime-settings",
 		"/Users/marcus/Documents/ds/src/mapreduce/common_reduce.go",
 		"/Users/marcus/Documents/ds/src/main/wc.go",
 		"/Users/marcus/Documents/ds/sftp-config.json",
@@ -283,13 +367,14 @@
 	],
 	"find":
 	{
-		"height": 28.0
+		"height": 40.0
 	},
 	"find_in_files":
 	{
-		"height": 101.0,
+		"height": 104.0,
 		"where_history":
 		[
+			""
 		]
 	},
 	"find_state":
@@ -297,6 +382,20 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"grtVoteCh",
+			"winElection",
+			"AppEntCh",
+			"dispatchRequestVote",
+			"format",
+			"broadcast",
+			"convertToLeader",
+			"setReply",
+			"setRequestVoteResp",
+			"votedFor",
+			"startElectionTimeoutTimer",
+			"startTimer",
+			"ELECTIONTIMEOUT",
+			"ELAPSETIMEOUT",
 			"applymsg"
 		],
 		"highlight": true,
@@ -305,6 +404,16 @@
 		"regex": true,
 		"replace_history":
 		[
+			"grantVoteCh",
+			"winElectionCh",
+			"appEntCh",
+			"dispatch",
+			"setAppendEntriesReply",
+			"setRequestVoteReply",
+			"resetElectionTimeoutTimer",
+			"resetTimer",
+			"ELECTION_TIMEOUT",
+			"ELECTIONTIMEOUT"
 		],
 		"reverse": false,
 		"show_context": true,
@@ -312,81 +421,6 @@
 		"whole_word": false,
 		"wrap": true
 	},
-	"groups":
-	[
-		{
-			"selected": 0,
-			"sheets":
-			[
-				{
-					"buffer": 0,
-					"file": "src/raft/raft.go",
-					"semi_transient": true,
-					"settings":
-					{
-						"buffer_size": 6809,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"git_gutter_is_enabled": true,
-							"incomplete_sync": null,
-							"remote_loading": false,
-							"synced": false,
-							"syntax": "Packages/GoSublime/syntax/GoSublime-Go.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 485.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "src/raft/config.go",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 12183,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								7101,
-								7101
-							]
-						],
-						"settings":
-						{
-							"git_gutter_is_enabled": true,
-							"incomplete_sync": null,
-							"remote_loading": false,
-							"synced": false,
-							"syntax": "Packages/GoSublime/syntax/GoSublime-Go.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 5611.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				}
-			]
-		}
-	],
 	"incremental_find":
 	{
 		"height": 28.0
@@ -431,10 +465,9 @@
 		"height": 187.0
 	},
 	"pinned_build_system": "",
-	"project": "ds.sublime-project",
 	"replace":
 	{
-		"height": 52.0
+		"height": 72.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -468,7 +501,6 @@
 		],
 		"width": 0.0
 	},
-	"selected_group": 0,
 	"settings":
 	{
 	},
@@ -476,7 +508,7 @@
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 334.0,
+	"side_bar_width": 207.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{

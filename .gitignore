@@ -4,3 +4,4 @@ api.key
 **.idea
 sftp-config.json
 **/.DS_Store
+**/*.sublime-project

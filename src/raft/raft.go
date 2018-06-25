@@ -54,7 +54,7 @@ type ApplyMsg struct {
 type LogEntry struct {
 	Index   int
 	Term    int
-	Command string
+	Command interface{}
 }
 
 //
@@ -241,6 +241,13 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 	isLeader := true
 
 	// Your code here (2B).
+	if term, isLeader = rf.GetState(); !isLeader {
+		return index, term, false
+	}
+	rf.mu.Lock()
+	rf.logEntries = append(rf.logEntries, LogEntry{len(rf.logEntries), term, command})
+	rf.mu.Unlock()
+	rf.dispatchAppendEntries()
 
 	return index, term, isLeader
 }
@@ -264,27 +271,41 @@ func (rf *Raft) Kill() {
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	// check term
+	DPrintf("%v %v receive request vote args %+v", rf.state, rf.me, *args)
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+
 	if args.Term < rf.currentTerm {
+		DPrintf("%v %v reject request vote because current term %v > request term %v",
+			rf.state, rf.me, rf.currentTerm, args.Term)
 		setRequestVoteReply(reply, rf.currentTerm, false)
 		return
 	}
 	if args.Term > rf.currentTerm {
+		DPrintf("%v %v become follower and update term from %v to %v because receive request vote args %+v from server %v",
+			rf.state, rf.me, rf.currentTerm, args.Term, args, args.CandidateId)
+		rf.becomeFollower()
 		rf.votedFor = -1
+		rf.currentTerm = args.Term
 	}
 	// check voted for
 	cond1 := rf.votedFor != -1 && rf.votedFor != args.CandidateId
 	// check log up-to-date
-	lastLog := rf.logEntries[len(rf.logEntries)-1]
-	cond2 := lastLog.Term > args.LastLogTerm
-	cond3 := lastLog.Term == args.LastLogTerm && lastLog.Index > args.LastLogIndex
-	if cond1 || cond2 || cond3 {
+	// lastLog := rf.logEntries[len(rf.logEntries)-1]
+	// cond2 := lastLog.Term > args.LastLogTerm
+	// cond3 := lastLog.Term == args.LastLogTerm && lastLog.Index > args.LastLogIndex
+	if cond1 { //|| cond2 || cond3 {
+		// DPrintf("%v %v reject vote because cond1=%v cond2=%v cond3=%v", rf.state, rf.me, cond1, cond2, cond3)
+		DPrintf("%v %v reject request vote because cond1=%v", rf.state, rf.me, cond1)
 		setRequestVoteReply(reply, rf.currentTerm, false)
 		return
 	}
-	rf.grantVoteCh <- true
+	DPrintf("%v %v grant vote for %v at term %v", rf.state, rf.me, args.CandidateId, args.Term)
 	rf.votedFor = args.CandidateId
-	rf.currentTerm = args.Term
+	CleanAndSet(rf.grantVoteCh)
 	setRequestVoteReply(reply, rf.currentTerm, true)
+
+	DPrintf("%v %v send reply %+v to candidate %v", rf.state, rf.me, reply, args.CandidateId)
 }
 
 type VoteCount struct {
@@ -293,47 +314,72 @@ type VoteCount struct {
 	reported bool
 }
 
+func (rf *Raft) requestVoteWithArgs(server int, args *RequestVoteArgs, vc VoteCount) {
+	reply := &RequestVoteReply{}
+	ok := rf.sendRequestVote(server, args, reply)
+	DPrintf("%v %v receive request vote reply %+v from %v", rf.state, rf.me, *reply, server)
+	if !ok {
+		return
+	}
+	if reply.VoteGranted {
+		vc.Lock()
+		vc.count++
+		if vc.count > len(rf.peers)/2 && !vc.reported {
+			DPrintf("%v win election at term %v", rf.me, rf.currentTerm)
+			CleanAndSet(rf.winElectionCh)
+			vc.reported = true
+		}
+		vc.Unlock()
+	} else {
+		rf.mu.Lock()
+		if reply.Term > rf.currentTerm {
+			rf.becomeFollower()
+			DPrintf("candidate %v become follower and update term from %v to %v because receive request vote reply %+v from %v",
+				rf.me, rf.currentTerm, reply.Term, reply, server)
+			rf.currentTerm = reply.Term
+		}
+		rf.mu.Unlock()
+	}
+}
+
 func (rf *Raft) dispatchRequestVote() {
 	rf.mu.Lock()
-	req := &RequestVoteArgs{rf.currentTerm, rf.me, len(rf.logEntries) - 1,
+	rf.currentTerm++
+	rf.votedFor = rf.me
+	args := &RequestVoteArgs{rf.currentTerm, rf.me, len(rf.logEntries) - 1,
 		rf.logEntries[len(rf.logEntries)-1].Term}
 	rf.mu.Unlock()
+	DPrintf("%v %v dispatching request vote args %+v", rf.state, rf.me, *args)
 	vc := VoteCount{count: 1, reported: false}
 	for i := 0; i < len(rf.peers); i++ {
 		if i == rf.me {
 			continue
 		}
-		go func(server int, args *RequestVoteArgs, vc VoteCount) {
-			reply := &RequestVoteReply{}
-			if ok := rf.sendRequestVote(server, args, reply); !ok {
-				return
-			}
-			if reply.VoteGranted {
-				vc.Lock()
-				vc.count++
-				if vc.count > len(rf.peers)/2 && !vc.reported {
-					rf.winElectionCh <- true
-					vc.reported = true
-				}
-				vc.Unlock()
-			}
-		}(i, req, vc)
+		go rf.requestVoteWithArgs(i, args, vc)
 	}
 }
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
 	if args.Term < rf.currentTerm {
+		DPrintf("%v %v reject append entries because current term %v > request term %v", rf.state, rf.me, rf.currentTerm, args.Term)
 		setAppendEntriesReply(reply, rf.currentTerm, false)
 		return
+	}
+	if args.Term > rf.currentTerm {
+		DPrintf("%v %v become follower and update term from %v to %v because receive append entry args %+v from server %v",
+			rf.state, rf.me, rf.currentTerm, args.Term, args, args.LeaderId)
+		rf.becomeFollower()
+		rf.currentTerm = args.Term
 	}
 	// check rf has the log entry before new ones
-	if len(rf.logEntries) < args.PrevLogIndex+1 ||
-		rf.logEntries[args.PrevLogIndex].Term != args.PrevLogTerm {
-		setAppendEntriesReply(reply, rf.currentTerm, false)
-		return
-	}
-	rf.currentTerm = args.Term
-	rf.appEntCh <- true
+	// if len(rf.logEntries) < args.PrevLogIndex+1 ||
+	// 	rf.logEntries[args.PrevLogIndex].Term != args.PrevLogTerm {
+	// 	setAppendEntriesReply(reply, rf.currentTerm, false)
+	// 	return
+	// }
+	CleanAndSet(rf.appEntCh)
 
 	// i := 0
 	// for j := args.PrevLogIndex + 1; i < len(args.Entries) && j < len(rf.logEntries); i++ {
@@ -354,49 +400,72 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	setAppendEntriesReply(reply, rf.currentTerm, true)
 }
 
+func (rf *Raft) appendEntriesWithArgs(server int, args *AppendEntriesArgs) {
+	reply := &AppendEntriesReply{}
+	ok := rf.sendAppendEntries(server, args, reply)
+	if !ok {
+		return
+	}
+	rf.mu.Lock()
+	if !reply.Success && reply.Term > rf.currentTerm {
+		rf.becomeFollower()
+		DPrintf("leader %v become follower and update term from %v to %v because receive append entry reply %+v from %v",
+			rf.me, rf.currentTerm, reply.Term, reply, server)
+		rf.currentTerm = reply.Term
+	}
+	rf.mu.Unlock()
+}
+
 func (rf *Raft) dispatchAppendEntries() {
+	rf.mu.Lock()
+	term := rf.currentTerm
+	leaderId := rf.me
+	commitIndex := rf.commitIndex
+	logEntries := rf.logEntries
+	nextIndex := rf.nextIndex
+	lastLog := logEntries[len(logEntries)-1]
+	rf.mu.Unlock()
+	// DPrintf("server %v dispatching append entries args %+v", rf.me, args)
 	for i := 0; i < len(rf.peers); i++ {
 		if i == rf.me {
 			continue
 		}
-		entries := make([]LogEntry, 0)
-		lastLog := rf.logEntries[len(rf.logEntries)-1]
-		args := &AppendEntriesArgs{rf.currentTerm, rf.me, lastLog.Index, lastLog.Term, entries,
-			rf.commitIndex}
-		reply := &AppendEntriesReply{}
-		rf.sendAppendEntries(i, args, reply)
+		entries := logEntries[nextIndex[i]:]
+		args := &AppendEntriesArgs{term, leaderId, lastLog.Index, lastLog.Term, entries, commitIndex}
+		go rf.appendEntriesWithArgs(i, args)
 	}
 
 }
 
 func (rf *Raft) becomeFollower() {
-	rf.mu.Lock()
-	defer rf.mu.Unlock()
+	DPrintf("%v %v become follower at term %v", rf.state, rf.me, rf.currentTerm)
 	rf.state = FOLLOWER
 	rf.resetElectionTimeout()
 }
 
 func (rf *Raft) becomeCandidate() {
-	rf.mu.Lock()
+	DPrintf("%v %v become candidate at term %v", rf.state, rf.me, rf.currentTerm)
 	rf.state = CANDIDATE
-	rf.currentTerm++
-	rf.votedFor = rf.me
 	rf.resetElectionTimeout()
-	rf.mu.Unlock()
-	rf.dispatchRequestVote()
 }
 
 func (rf *Raft) becomeLeader() {
-	rf.mu.Lock()
-	defer rf.mu.Unlock()
+	if rf.state != CANDIDATE {
+		return
+	}
+	DPrintf("%v %v become leader at term %d", rf.state, rf.me, rf.currentTerm)
 	rf.state = LEADER
 	rf.heartbeat = HEARTBEAT
-	// init nextIndex and MatchIndex
+	// init nextIndex and
+	for i := 0; i < len(rf.peers); i++ {
+		rf.nextIndex[i] = len(rf.logEntries) + 1
+		rf.matchIndex[i] = 0
+	}
 }
 
 func (rf *Raft) resetElectionTimeout() {
 	rand.Seed(time.Now().UnixNano())
-	timeout := rand.Int63n(300) + 300
+	timeout := rand.Int63n(300) + 400
 	rf.electionTimeout = time.Duration(timeout) * time.Millisecond
 }
 
@@ -405,6 +474,7 @@ func (rf *Raft) run() {
 		rf.mu.Lock()
 		state := rf.state
 		eto := rf.electionTimeout
+		term := rf.currentTerm
 		hb := rf.heartbeat
 		rf.mu.Unlock()
 		switch state {
@@ -412,33 +482,42 @@ func (rf *Raft) run() {
 			timer := time.NewTimer(eto)
 			select {
 			case <-rf.grantVoteCh:
+				DPrintf("follower %v at term %v receive channel grant vote", rf.me, term)
 				timer.Stop()
 			case <-rf.appEntCh:
+				// DPrintf("follower %v receive channel append entry", rf.me)
 				timer.Stop()
 			case <-timer.C:
+				DPrintf("follower %v at term %v election time out", rf.me, term)
+				rf.mu.Lock()
 				rf.becomeCandidate()
+				rf.mu.Unlock()
 			}
 		case CANDIDATE:
+			go rf.dispatchRequestVote()
 			timer := time.NewTimer(eto)
 			select {
+			case <-rf.grantVoteCh:
+				DPrintf("candidate %v at term %v receive channel grant vote", rf.me, term)
+				timer.Stop()
 			case <-rf.appEntCh:
+				// DPrintf("candidate %v receive channel append entry ", rf.me)
 				timer.Stop()
-				rf.becomeFollower()
 			case <-rf.winElectionCh:
+				DPrintf("candidate %v at term %v receive channel win election", rf.me, term)
 				timer.Stop()
+				rf.mu.Lock()
 				rf.becomeLeader()
+				rf.mu.Unlock()
 			case <-timer.C:
-				rf.becomeCandidate()
+				DPrintf("candidate %v at term %v election time out", rf.me, term)
+				rf.mu.Lock()
+				rf.resetElectionTimeout()
+				rf.mu.Unlock()
 			}
 		case LEADER:
-			timer := time.NewTimer(hb)
-			select {
-			case <-rf.appEntCh:
-				timer.Stop()
-				rf.becomeFollower()
-			case <-timer.C:
-				rf.dispatchAppendEntries()
-			}
+			rf.dispatchAppendEntries()
+			time.Sleep(hb)
 		}
 	}
 }
