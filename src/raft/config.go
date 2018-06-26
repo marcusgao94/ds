@@ -303,11 +303,6 @@ func (cfg *config) checkOneLeader() int {
 		leaders := make(map[int][]int)
 		for i := 0; i < cfg.n; i++ {
 			if cfg.connected[i] {
-
-				server := cfg.rafts[i]
-				fmt.Printf("%v %d, term %v, votedfor %v\n",
-					server.state, server.me, server.currentTerm, server.votedFor)
-
 				if term, leader := cfg.rafts[i].GetState(); leader {
 					leaders[term] = append(leaders[term], i)
 				}
